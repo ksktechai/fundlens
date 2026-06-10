@@ -28,7 +28,7 @@ public class HttpLoggingFilter
     implements ContainerRequestFilter, ContainerResponseFilter, WriterInterceptor {
 
   private static final String START_NANOS = "fundlens.request.start";
-  private static final int BODY_LOG_LIMIT = 2000;
+  private static final int BODY_LOG_LIMIT = 5120;
 
   @Inject
   @ConfigProperty(name = "fundlens.log.http-bodies", defaultValue = "true")
