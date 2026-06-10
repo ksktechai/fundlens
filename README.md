@@ -137,6 +137,15 @@ curl -s localhost:8080/api/v1/explain -H 'Content-Type: application/json' -d '{
   "audience": "INVESTOR"
 }'
 
+# Same pipeline, streamed as Server-Sent Events: live 'stage' progress
+# (research/draft/compliance), then the approved answer as 'answer-chunk'
+# events, then one 'complete' event; failures arrive as an in-band 'error'
+# event. Drafts are NEVER streamed before the compliance verdict.
+curl -sN localhost:8080/api/v1/explain/stream -H 'Content-Type: application/json' -d '{
+  "question": "Compare fees between Milford Active Growth and Simplicity Growth",
+  "audience": "ADVISER"
+}'
+
 # Fund catalogue + latest structured metrics
 curl -s localhost:8080/api/v1/funds
 curl -s localhost:8080/api/v1/funds/1

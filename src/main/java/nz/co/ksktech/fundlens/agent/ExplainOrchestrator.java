@@ -30,6 +30,17 @@ public class ExplainOrchestrator {
 
   public record Outcome(UUID auditId, String answer, Verdict verdict, List<Citation> citations) {}
 
+  /**
+   * Receives pipeline progress for streaming responses. Stage details never carry draft content —
+   * nothing unapproved may reach a client before the compliance verdict.
+   */
+  @FunctionalInterface
+  public interface ProgressListener {
+    ProgressListener NOOP = (stage, status, detail) -> {};
+
+    void onStage(String stage, String status, String detail);
+  }
+
   private final ResearchAgent researchAgent;
   private final WriterAgent writerAgent;
   private final ComplianceGate complianceGate;
@@ -57,6 +68,11 @@ public class ExplainOrchestrator {
   }
 
   public Outcome explain(String question, List<Long> fundIds, Audience audience) {
+    return explain(question, fundIds, audience, ProgressListener.NOOP);
+  }
+
+  public Outcome explain(
+      String question, List<Long> fundIds, Audience audience, ProgressListener listener) {
     long startNanos = System.nanoTime();
     List<Long> scope = fundIds == null ? List.of() : fundIds;
     retrievalContext.setFundIds(scope);
@@ -66,19 +82,30 @@ public class ExplainOrchestrator {
     String findings = null;
 
     try {
+      listener.onStage("research", "started", null);
       findings = researchAgent.research(question, describeFunds(scope));
+      listener.onStage(
+          "research", "completed", retrievalContext.getRetrievedChunks().size() + " chunks retrieved");
 
+      listener.onStage("draft", "started", "attempt 1");
       String draft = writerAgent.write(question, audience.name(), findings, "none");
+      listener.onStage("draft", "completed", "attempt 1");
       drafts.add(draft);
+      listener.onStage("compliance", "started", "attempt 1");
       ComplianceResult result = complianceGate.review(draft, findings);
+      listener.onStage("compliance", "completed", verdictDetail(result));
       complianceResults.add(result);
 
       if (result.verdict() == Verdict.REVISE) {
+        listener.onStage("draft", "started", "attempt 2");
         draft =
             writerAgent.write(
                 question, audience.name(), findings, String.join("; ", result.issues()));
+        listener.onStage("draft", "completed", "attempt 2");
         drafts.add(draft);
+        listener.onStage("compliance", "started", "attempt 2");
         result = complianceGate.review(draft, findings);
+        listener.onStage("compliance", "completed", verdictDetail(result));
         complianceResults.add(result);
       }
 
@@ -138,6 +165,11 @@ public class ExplainOrchestrator {
     record.modelName = writerModelName;
     record.latencyMs = Duration.ofNanos(System.nanoTime() - startNanos).toMillis();
     return auditService.append(record);
+  }
+
+  private static String verdictDetail(ComplianceResult result) {
+    int issues = result.issues().size();
+    return result.verdict() + (issues == 0 ? "" : " (" + issues + " issue" + (issues > 1 ? "s" : "") + ")");
   }
 
   private List<Citation> citations() {

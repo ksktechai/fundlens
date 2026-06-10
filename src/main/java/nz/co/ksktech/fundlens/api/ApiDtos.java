@@ -1,5 +1,6 @@
 package nz.co.ksktech.fundlens.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -72,4 +73,36 @@ public final class ApiDtos {
 
   public record SyncRunResponse(
       Long runId, Instant startedAt, Instant finishedAt, String status, JsonNode outcomes) {}
+
+  /**
+   * One SSE frame of POST /api/v1/explain/stream. type is one of: stage (pipeline progress),
+   * answer-chunk (a piece of the compliance-approved answer), complete (final result), error.
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public record ExplainStreamEvent(
+      String type,
+      String stage,
+      String status,
+      String detail,
+      String chunk,
+      ExplainResponse result,
+      Integer errorStatus,
+      UUID auditId) {
+
+    public static ExplainStreamEvent stage(String stage, String status, String detail) {
+      return new ExplainStreamEvent("stage", stage, status, detail, null, null, null, null);
+    }
+
+    public static ExplainStreamEvent answerChunk(String chunk) {
+      return new ExplainStreamEvent("answer-chunk", null, null, null, chunk, null, null, null);
+    }
+
+    public static ExplainStreamEvent complete(ExplainResponse result) {
+      return new ExplainStreamEvent("complete", null, null, null, null, result, null, null);
+    }
+
+    public static ExplainStreamEvent error(int status, String detail, UUID auditId) {
+      return new ExplainStreamEvent("error", null, null, detail, null, null, status, auditId);
+    }
+  }
 }
