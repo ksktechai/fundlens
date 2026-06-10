@@ -36,7 +36,7 @@ participant "ComplianceGate\n(+ ComplianceAgent)" as COMP #f3e0f7
 participant "Tools\n(FundData, FeeCalc)" as TOOLS #fff2cc
 participant "AuditService" as AUD #f8cecc
 database "PostgreSQL\n+ pgvector" as DB #d5e8d4
-participant "Ollama (LAN)\n192.168.1.5" as LLM #ffe6cc
+participant "Ollama\n(OLLAMA_BASE_URL)" as LLM #ffe6cc
 
 autonumber "<b>0."
 

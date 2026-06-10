@@ -49,7 +49,7 @@
         <mxCell id="sync" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d0e0e3;strokeColor=#10739e;fontSize=11;fontStyle=1;strokeWidth=2;" value="🔄 DiscloseSyncService&#xa;ETag incremental sync&#xa;@Retry · @Timeout · @CircuitBreaker" vertex="1">
           <mxGeometry height="75" width="240" x="580" y="600" as="geometry" />
         </mxCell>
-        <mxCell id="ollama" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontStyle=1;strokeWidth=2;" value="🧠 Ollama — LAN host&#xa;192.168.1.5:11434&#xa;qwen3:30b (research/writer)&#xa;qwen3:8b (compliance)&#xa;nomic-embed-text (embeddings)" vertex="1">
+        <mxCell id="ollama" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontStyle=1;strokeWidth=2;" value="🧠 Ollama host&#xa;OLLAMA_BASE_URL (default localhost:11434)&#xa;qwen3:30b (research/writer)&#xa;qwen3:8b (compliance)&#xa;nomic-embed-text (embeddings)" vertex="1">
           <mxGeometry height="110" width="280" x="1030" y="150" as="geometry" />
         </mxCell>
         <mxCell id="postgres" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;strokeWidth=2;" value="🗃 PostgreSQL 16 + pgvector&#xa;funds · fund_metrics · fund_documents&#xa;embeddings · sync_runs&#xa;audit_records (trigger: no UPDATE/DELETE)" vertex="1">

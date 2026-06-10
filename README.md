@@ -59,12 +59,22 @@ Disclose Register), red = audit/fail-safe paths.
 ## Prerequisites
 
 - Java 21+, Docker (for Postgres and Testcontainers)
-- **Ollama on a LAN host** (default `http://192.168.1.5:11434`) with `qwen3:30b` and
-  `nomic-embed-text` pulled. The Ollama host must bind all interfaces:
+- **An Ollama server** with the models pulled:
+  `ollama pull qwen3:30b && ollama pull qwen3:8b && ollama pull nomic-embed-text`.
+  FundLens defaults to `http://localhost:11434`. If Ollama runs on a **different
+  machine** (a LAN GPU box, a server), point `OLLAMA_BASE_URL` at it — the easiest
+  way is a local `.env` file (gitignored, picked up by every `make` target):
+
+  ```bash
+  # .env
+  OLLAMA_BASE_URL=http://<ollama-host-ip>:11434
+  ```
+
+  A remote Ollama must bind all interfaces, not just loopback:
   - macOS: `launchctl setenv OLLAMA_HOST 0.0.0.0`, then restart Ollama
   - Linux: systemd override — `systemctl edit ollama`, add
     `[Service]` / `Environment="OLLAMA_HOST=0.0.0.0"`, then `systemctl restart ollama`
-  - Verify from this machine: `curl http://192.168.1.5:11434/api/tags`
+  - Verify from this machine: `curl http://<ollama-host-ip>:11434/api/tags`
 - **Disclose Register API access** (only needed for `POST /api/v1/sync`):
   1. Register at [portal.api.business.govt.nz](https://portal.api.business.govt.nz) and
      subscribe to the **Disclose (Sandbox)** product first; the subscription key appears
@@ -76,13 +86,31 @@ Disclose Register), red = audit/fail-safe paths.
 ## Quickstart
 
 ```bash
-make up        # start Postgres (pgvector/pgvector:pg16) on localhost:5433
-make dev       # quarkus:dev on http://localhost:8080  (auto-ingests seed fund updates)
-make test      # ./mvnw verify — fully offline (WireMock + Testcontainers)
-make clean
+make up        # start Postgres, then
+make dev       # open http://localhost:8080
 ```
 
-Configuration is env-overridable: `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL`,
+### Makefile targets
+
+| Target | What it does |
+|---|---|
+| `make up` | Starts Postgres (`pgvector/pgvector:pg16`) via docker-compose on `localhost:5433`, waits until healthy |
+| `make dev` | `make up` + `./mvnw quarkus:dev` on `http://localhost:8080` — live reload, Swagger UI at `/q/swagger-ui`, auto-ingests the seed fund updates |
+| `make test` | `./mvnw verify` — full build + 22 tests, fully offline (WireMock + Testcontainers; no Ollama or Disclose access needed) |
+| `make clean` | `./mvnw clean` + stops the docker-compose stack |
+
+Every target loads a local **`.env`** file (gitignored) and exports its variables, so
+machine-specific settings never need to be edited into the project:
+
+```bash
+# .env — example for an Ollama box elsewhere on the LAN
+OLLAMA_BASE_URL=http://192.168.1.5:11434
+DISCLOSE_SUBSCRIPTION_KEY=...
+DISCLOSE_ORGANISATION_ID=...
+```
+
+All settings are env-overridable: `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL`,
+`OLLAMA_RESEARCH_MODEL` / `OLLAMA_WRITER_MODEL` / `OLLAMA_COMPLIANCE_MODEL`,
 `OLLAMA_EMBED_MODEL`, `DB_URL`/`DB_USER`/`DB_PASSWORD`, `DISCLOSE_*`,
 `DISCLOSE_FUND_NUMBERS` (comma-separated fund numbers to sync).
 
