@@ -171,6 +171,41 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "explain-stream",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n \"question\": \"Compare fees between Milford Active Growth and Simplicity Growth\",\n  \"audience\": \"ADVISER\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/api/v1/explain/stream",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "explain",
+            "stream"
+          ]
+        }
+      },
+      "response": []
     }
   ]
 }
