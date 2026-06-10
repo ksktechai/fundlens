@@ -62,7 +62,12 @@ Disclose Register), red = audit/fail-safe paths.
 
 - Java 21+, Docker (for Postgres and Testcontainers)
 - **An Ollama server** with the models pulled:
-  `ollama pull qwen3:30b && ollama pull qwen3:8b && ollama pull nomic-embed-text`.
+  `ollama pull qwen3:8b && ollama pull nomic-embed-text`.
+  All three agents default to `qwen3:8b` with qwen3's "thinking" mode disabled —
+  on a typical LAN GPU box an explain round-trip is ~20s. For higher-quality
+  research/writing pull `qwen3:30b` and set `OLLAMA_RESEARCH_MODEL` /
+  `OLLAMA_WRITER_MODEL` (and `OLLAMA_THINK=true` to re-enable reasoning,
+  at a real latency cost).
   FundLens defaults to `http://localhost:11434`. If Ollama runs on a **different
   machine** (a LAN GPU box, a server), point `OLLAMA_BASE_URL` at it — the easiest
   way is a local `.env` file (gitignored, picked up by every `make` target):

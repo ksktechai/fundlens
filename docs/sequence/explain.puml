@@ -51,7 +51,7 @@ activate RES #e1d5e7
 RES -> LLM : embed query (nomic-embed-text)
 RES -> DB : vector search\n(filter: fund_id metadata)
 DB --> RES : top-k chunks (recorded for audit)
-RES -> LLM : chat — model <b>research</b> (qwen3:30b)
+RES -> LLM : chat — model <b>research</b> (default qwen3:8b)
 opt LLM requests tool calls
   RES -> TOOLS : getLatestFundMetrics / projectedAnnualFeeCost
   TOOLS -> DB : fund_metrics lookup
@@ -66,7 +66,7 @@ deactivate RES
 == 2 · Write ==
 ORCH -> WRI : write(question, audience, findings)
 activate WRI #e1d5e7
-WRI -> LLM : chat — model <b>writer</b> (qwen3:30b)
+WRI -> LLM : chat — model <b>writer</b> (default qwen3:8b)
 LLM --> WRI : draft + citations + disclaimer
 WRI --> ORCH : draft 1
 deactivate WRI
@@ -74,7 +74,7 @@ deactivate WRI
 == 3 · Compliance gate ==
 ORCH -> COMP : review(draft, findings)
 activate COMP #f3e0f7
-COMP -> LLM : chat — model <b>compliance</b> (qwen3:8b)\nstructured JSON {verdict, issues}
+COMP -> LLM : chat — model <b>compliance</b> (default qwen3:8b)\nstructured JSON {verdict, issues}
 LLM --> COMP : verdict
 note right of COMP #ffcdd2 : malformed / unparseable\noutput ⇒ <b>BLOCK</b> (fail-safe)
 COMP --> ORCH : PASS | REVISE | BLOCK + issues
