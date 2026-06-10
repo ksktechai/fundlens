@@ -7,32 +7,31 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import java.time.Instant;
 
 @Entity
 @Table(name = "sync_runs")
 public class SyncRun extends PanacheEntityBase {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  public Long id;
 
-    @Column(name = "started_at", nullable = false)
-    public Instant startedAt;
+  @Column(name = "started_at", nullable = false)
+  public Instant startedAt;
 
-    @Column(name = "finished_at")
-    public Instant finishedAt;
+  @Column(name = "finished_at")
+  public Instant finishedAt;
 
-    /** SCHEDULED or MANUAL. */
-    @Column(name = "triggered_by", nullable = false)
-    public String triggeredBy;
+  /** SCHEDULED or MANUAL. */
+  @Column(name = "triggered_by", nullable = false)
+  public String triggeredBy;
 
-    /** SUCCESS, PARTIAL or FAILED. */
-    @Column(nullable = false)
-    public String status;
+  /** SUCCESS, PARTIAL or FAILED. */
+  @Column(nullable = false)
+  public String status;
 
-    /** JSON array of per-fund outcomes. */
-    @Column(columnDefinition = "text")
-    public String outcomes;
+  /** JSON array of per-fund outcomes. */
+  @Column(columnDefinition = "text")
+  public String outcomes;
 }

@@ -18,20 +18,22 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ExplainResource {
 
-    private final ExplainOrchestrator orchestrator;
+  private final ExplainOrchestrator orchestrator;
 
-    public ExplainResource(ExplainOrchestrator orchestrator) {
-        this.orchestrator = orchestrator;
-    }
+  public ExplainResource(ExplainOrchestrator orchestrator) {
+    this.orchestrator = orchestrator;
+  }
 
-    @POST
-    @Operation(summary = "Ask a natural-language question about KiwiSaver funds",
-            description = "Runs the research → write → compliance agent pipeline and returns a cited, "
-                    + "compliance-checked answer plus the audit id of the full decision trail.")
-    public ExplainResponse explain(@Valid ExplainRequest request) {
-        ExplainOrchestrator.Outcome outcome = orchestrator.explain(
-                request.question(), request.fundIds(), request.audienceOrDefault());
-        return new ExplainResponse(outcome.answer(), outcome.citations(),
-                outcome.verdict().name(), outcome.auditId());
-    }
+  @POST
+  @Operation(
+      summary = "Ask a natural-language question about KiwiSaver funds",
+      description =
+          "Runs the research → write → compliance agent pipeline and returns a cited, "
+              + "compliance-checked answer plus the audit id of the full decision trail.")
+  public ExplainResponse explain(@Valid ExplainRequest request) {
+    ExplainOrchestrator.Outcome outcome =
+        orchestrator.explain(request.question(), request.fundIds(), request.audienceOrDefault());
+    return new ExplainResponse(
+        outcome.answer(), outcome.citations(), outcome.verdict().name(), outcome.auditId());
+  }
 }

@@ -7,7 +7,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -15,31 +14,31 @@ import java.time.LocalDate;
 @Table(name = "fund_documents")
 public class FundDocument extends PanacheEntityBase {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  public Long id;
 
-    @Column(name = "fund_id")
-    public Long fundId;
+  @Column(name = "fund_id")
+  public Long fundId;
 
-    @Column(nullable = false)
-    public String title;
+  @Column(nullable = false)
+  public String title;
 
-    public String provider;
+  public String provider;
 
-    @Column(name = "doc_type", nullable = false)
-    public String docType;
+  @Column(name = "doc_type", nullable = false)
+  public String docType;
 
-    @Column(name = "period_end")
-    public LocalDate periodEnd;
+  @Column(name = "period_end")
+  public LocalDate periodEnd;
 
-    /** Where the document came from: UPLOAD, DISCLOSE_SYNC, DEV_SEED. */
-    @Column(nullable = false)
-    public String source;
+  /** Where the document came from: UPLOAD, DISCLOSE_SYNC, DEV_SEED. */
+  @Column(nullable = false)
+  public String source;
 
-    @Column(name = "chunk_count", nullable = false)
-    public int chunkCount;
+  @Column(name = "chunk_count", nullable = false)
+  public int chunkCount;
 
-    @Column(name = "ingested_at", nullable = false)
-    public Instant ingestedAt = Instant.now();
+  @Column(name = "ingested_at", nullable = false)
+  public Instant ingestedAt = Instant.now();
 }
