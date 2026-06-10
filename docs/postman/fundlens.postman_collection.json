@@ -1,0 +1,176 @@
+{
+  "info": {
+    "_postman_id": "c129c169-42d3-4edb-8b6d-3ab9e0e36afa",
+    "name": "fundlens",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "4991288"
+  },
+  "item": [
+    {
+      "name": "explain",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"Why is the Westpac Active Growth fund down this year?\",\n  \"audience\": \"INVESTOR\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/api/v1/explain",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "explain"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-funds",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:8080/api/v1/funds",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "funds"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-fund-details-by-id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:8080/api/v1/funds/1",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "funds",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "upload-fund-doc",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "type": "text",
+              "key": "providerId",
+              "value": "Westpac"
+            },
+            {
+              "type": "text",
+              "key": "fundId",
+              "value": "1"
+            },
+            {
+              "type": "text",
+              "key": "docType",
+              "value": "FUND_UPDATE"
+            },
+            {
+              "type": "text",
+              "key": "periodEnd",
+              "value": "2026-03-31"
+            },
+            {
+              "type": "file",
+              "key": "file",
+              "src": "fund-update.pdf"
+            }
+          ]
+        },
+        "url": {
+          "raw": "localhost:8080/api/v1/ingest",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "ingest"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "trigger-sync",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "localhost:8080/api/v1/sync",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "sync"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "audit-by-id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:8080/api/v1/audit/a8c17774-8a3d-4643-b321-dfd6a4e7fc63",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "audit",
+            "a8c17774-8a3d-4643-b321-dfd6a4e7fc63"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

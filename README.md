@@ -1,5 +1,7 @@
 # FundLens — KiwiSaver Fund Explainer API
 
+[![CI](https://github.com/ksktechai/fundlens/actions/workflows/ci.yml/badge.svg)](https://github.com/ksktechai/fundlens/actions/workflows/ci.yml)
+
 A Quarkus API where financial advisers (or investors) ask natural-language questions about
 KiwiSaver funds and receive **cited, compliance-checked explanations** grounded in public
 regulatory data from the NZ Disclose Register. The differentiator is the **audit trail and
@@ -117,6 +119,11 @@ All settings are env-overridable: `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL`,
 ## API
 
 OpenAPI/Swagger UI: `http://localhost:8080/q/swagger-ui`. Health: `/q/health`. Metrics: `/q/metrics`.
+
+A ready-made **Postman collection** covering every endpoint (explain, funds, ingest,
+sync, audit) lives at
+[`docs/postman/fundlens.postman_collection.json`](docs/postman/fundlens.postman_collection.json)
+— import it via *Postman → Import → File*. Or use the equivalent curl commands below.
 
 ```bash
 # Ask a question (the whole pipeline: research → write → compliance → audit)
