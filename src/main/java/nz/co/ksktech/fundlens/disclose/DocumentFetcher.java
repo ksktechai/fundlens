@@ -1,5 +1,6 @@
 package nz.co.ksktech.fundlens.disclose;
 
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class DocumentFetcher {
             .build();
 
     public byte[] fetch(String url) {
+        Log.infof(">>> GET %s (document download, no API headers)", url);
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(30))
                 .GET()
@@ -33,6 +35,8 @@ public class DocumentFetcher {
             if (response.statusCode() != 200) {
                 throw new DiscloseApiException(response.statusCode(), "document download failed for " + url);
             }
+            Log.infof("<<< %d %s (%d bytes, %s)", response.statusCode(), url, response.body().length,
+                    response.headers().firstValue("Content-Type").orElse("unknown content type"));
             return response.body();
         } catch (IOException e) {
             throw new DiscloseApiException(0, "document download failed for " + url + ": " + e.getMessage());
