@@ -1,0 +1,77 @@
+@startuml ingest
+title <b>POST /api/v1/ingest</b> — multipart upload → chunk → embed → pgvector
+
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam lifelineStrategy solid
+skinparam ParticipantPadding 30
+skinparam sequence {
+  ArrowColor #283593
+  ArrowThickness 1.8
+  ArrowFontSize 12
+  LifeLineBorderColor #3949AB
+  LifeLineBorderThickness 2.5
+  GroupBorderColor #8E24AA
+  GroupBorderThickness 2
+  GroupBackgroundColor #F3E5F5
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #E8EAF6
+  DividerFontStyle bold
+}
+skinparam participant {
+  BorderThickness 2
+  FontStyle bold
+}
+skinparam database {
+  BorderThickness 2
+  FontStyle bold
+}
+
+actor "Admin" as Client #ECEFF1
+participant "IngestResource" as API #dae8fc
+participant "IngestionService" as ING #d0e0e3
+participant "PDFBox /\nDocumentSplitters" as SPLIT #fff2cc
+participant "Ollama (LAN)\nnomic-embed-text" as LLM #ffe6cc
+database "PostgreSQL\n+ pgvector" as DB #d5e8d4
+
+autonumber "<b>0."
+
+Client -> API : POST /api/v1/ingest (multipart)\nproviderId · fundId · docType ·\nperiodEnd · file (PDF or text)
+activate API #dae8fc
+
+API -> API : bean validation\n(docType ∈ FUND_UPDATE|PDS|FACT_SHEET|OTHER)
+alt validation fails #FFEBEE
+  API --> Client : <b>400</b> problem+json {violations[]}
+end
+
+API -> ING : ingest(bytes, fileName, request)
+activate ING #d0e0e3
+
+ING -> SPLIT : detect %PDF magic bytes
+alt PDF
+  SPLIT -> SPLIT : PDFTextStripper.getText()
+else plain text
+  SPLIT -> SPLIT : UTF-8 decode
+end
+ING -> SPLIT : DocumentSplitters.recursive\n(~500 tokens, overlap)\n+ metadata {fund_id, provider,\ndoc_type, period_end, title}
+SPLIT --> ING : text segments
+
+ING -> LLM : embedAll(segments)
+activate LLM #ffe6cc
+LLM --> ING : 768-dim vectors
+deactivate LLM
+
+ING -> DB : embeddingStore.addAll\n(vectors + segments + metadata)
+ING -> DB : INSERT fund_documents\n(title, docType, periodEnd,\nsource=UPLOAD, chunkCount)
+DB --> ING : FundDocument row
+ING --> API : document
+deactivate ING
+
+API --> Client : <b>200</b> {documentId, title, chunkCount}
+deactivate API
+
+note over ING, DB #E1F5FE
+  The same service ingests Disclose fund-update PDFs (source=DISCLOSE_SYNC)
+  and dev-mode seed files (source=DEV_SEED) — one pipeline, three entry points.
+end note
+@enduml

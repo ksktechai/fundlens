@@ -1,0 +1,95 @@
+@startuml sync
+title <b>POST /api/v1/sync</b> (and nightly 03:00 cron) — ETag-incremental Disclose Register sync
+
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam lifelineStrategy solid
+skinparam ParticipantPadding 25
+skinparam sequence {
+  ArrowColor #283593
+  ArrowThickness 1.8
+  ArrowFontSize 12
+  LifeLineBorderColor #3949AB
+  LifeLineBorderThickness 2.5
+  GroupBorderColor #8E24AA
+  GroupBorderThickness 2
+  GroupBackgroundColor #F3E5F5
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #E8EAF6
+  DividerFontStyle bold
+}
+skinparam participant {
+  BorderThickness 2
+  FontStyle bold
+}
+skinparam database {
+  BorderThickness 2
+  FontStyle bold
+}
+
+actor "Admin /\nScheduler" as Client #ECEFF1
+participant "SyncResource" as API #dae8fc
+participant "DiscloseSyncService" as SYNC #d0e0e3
+participant "DiscloseService\n@Retry @Timeout\n@CircuitBreaker" as GW #f3e0f7
+participant "Disclose Register\napi.business.govt.nz" as REG #ffe6cc
+participant "Document host\n(redirect target)" as CDN #ffe6cc
+participant "IngestionService" as ING #d0e0e3
+database "PostgreSQL\n+ pgvector" as DB #d5e8d4
+
+autonumber "<b>0."
+
+Client -> API : POST /api/v1/sync
+activate API #dae8fc
+API -> SYNC : run("MANUAL")\nfunds from disclose.sync.fund-numbers
+activate SYNC #d0e0e3
+
+loop for each configured fund number — one failure never aborts the rest
+  SYNC -> DB : read stored ETag for fund
+  SYNC -> GW : fetchFund(n, etag)
+  activate GW #f3e0f7
+  GW -> REG : GET /fund/{n}\n<b>Ocp-Apim-Subscription-Key</b> + <b>x-organisation</b>\nIf-None-Match: <etag>
+  activate REG #ffe6cc
+
+  alt 304 Not Modified #E8F5E9
+    REG --> GW : 304 (empty)
+    deactivate REG
+    GW --> SYNC : unchanged
+    SYNC -> SYNC : outcome = NOT_MODIFIED\n(no metrics write, no re-ingestion)
+  else 200 OK
+    REG --> GW : fund JSON + new ETag header
+    GW --> SYNC : DiscloseFund + ETag
+    deactivate GW
+    SYNC -> DB : upsert Fund (+ store ETag)\nupsert FundMetrics (fees, returns,\nmix, top-ten) by (fund, period_end)
+
+    group Fund-update document — 302 is NEVER auto-followed #FFF8E1
+      SYNC -> GW : fetchFundUpdateDocumentLocation(n)
+      activate GW #f3e0f7
+      GW -> REG : GET /fund/{n}/fund-update-document\n(follow-redirects = <b>false</b>)
+      REG --> GW : <b>302</b> + Location header
+      GW --> SYNC : Location URL
+      deactivate GW
+      SYNC -> CDN : plain HttpClient GET Location\n<b>NO subscription key, NO org header</b>
+      activate CDN #ffe6cc
+      CDN --> SYNC : PDF bytes
+      deactivate CDN
+      SYNC -> ING : ingest(pdf, fundId,\ndocType=FUND_UPDATE, periodEnd)
+      activate ING #d0e0e3
+      ING -> DB : chunks → embeddings →\npgvector + fund_documents row
+      ING --> SYNC : ingested
+      deactivate ING
+    end
+    SYNC -> SYNC : outcome = UPDATED
+  else 429 / 5xx #FFEBEE
+    REG --> GW : error
+    GW -> GW : @Retry ×2 → @CircuitBreaker\ncounts the failure
+    GW --> SYNC : DiscloseApiException
+    SYNC -> SYNC : outcome = FAILED (message kept)\n<b>continue with next fund</b>
+  end
+end
+
+SYNC -> DB : INSERT sync_runs\n(started, finished, trigger,\nSUCCESS|PARTIAL|FAILED, per-fund outcomes)
+SYNC --> API : SyncSummary
+deactivate SYNC
+API --> Client : <b>200</b> {runId, status, outcomes[]}
+deactivate API
+@enduml

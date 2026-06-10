@@ -1,0 +1,60 @@
+@startuml audit
+title <b>GET /api/v1/audit/{auditId}</b> — full decision trail for one answer
+
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam lifelineStrategy solid
+skinparam ParticipantPadding 30
+skinparam sequence {
+  ArrowColor #283593
+  ArrowThickness 1.8
+  ArrowFontSize 12
+  LifeLineBorderColor #3949AB
+  LifeLineBorderThickness 2.5
+  GroupBorderColor #8E24AA
+  GroupBorderThickness 2
+  GroupBackgroundColor #F3E5F5
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #E8EAF6
+  DividerFontStyle bold
+}
+skinparam participant {
+  BorderThickness 2
+  FontStyle bold
+}
+skinparam database {
+  BorderThickness 2
+  FontStyle bold
+}
+
+actor "Adviser /\nCompliance officer" as Client #ECEFF1
+participant "AuditResource" as API #dae8fc
+participant "AuditService" as AUD #f8cecc
+database "PostgreSQL\naudit_records" as DB #d5e8d4
+
+autonumber "<b>0."
+
+Client -> API : GET /api/v1/audit/{auditId}
+activate API #dae8fc
+API -> AUD : find(auditId)
+activate AUD #f8cecc
+AUD -> DB : SELECT ... WHERE id = :uuid
+DB --> AUD : record | empty
+AUD --> API : Optional<AuditRecord>
+deactivate AUD
+
+alt record found
+  API -> API : expand stored JSON columns\n(fundIds, retrievedChunks,\ndrafts, complianceResults)
+  API --> Client : <b>200</b> {question, audience, retrievedChunks[],\nresearchFindings, drafts[], complianceResults[],\nfinalAnswer, status, modelName, latencyMs}
+else not found #FFEBEE
+  API --> Client : <b>404</b> problem+json\n{title: "Not found", status: 404}
+end
+deactivate API
+
+note over AUD, DB #FFEBEE
+  <b>Append-only by design:</b> AuditService has no update/delete path and a
+  database trigger rejects UPDATE/DELETE on audit_records — the trail shown
+  here is exactly what the pipeline recorded, even for BLOCKED answers
+  (status=BLOCKED) and upstream failures (status=UPSTREAM_ERROR).
+end note
+@enduml

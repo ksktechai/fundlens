@@ -1,0 +1,74 @@
+@startuml funds
+title <b>GET /api/v1/funds</b> and <b>GET /api/v1/funds/{id}</b> — catalogue + latest metrics
+
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam lifelineStrategy solid
+skinparam ParticipantPadding 30
+skinparam sequence {
+  ArrowColor #283593
+  ArrowThickness 1.8
+  ArrowFontSize 12
+  LifeLineBorderColor #3949AB
+  LifeLineBorderThickness 2.5
+  GroupBorderColor #8E24AA
+  GroupBorderThickness 2
+  GroupBackgroundColor #F3E5F5
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #E8EAF6
+  DividerFontStyle bold
+}
+skinparam participant {
+  BorderThickness 2
+  FontStyle bold
+}
+skinparam database {
+  BorderThickness 2
+  FontStyle bold
+}
+
+actor "Client" as Client #ECEFF1
+participant "FundResource" as API #dae8fc
+participant "Panache entities\n(Fund, FundMetrics)" as ORM #fff2cc
+database "PostgreSQL" as DB #d5e8d4
+
+autonumber "<b>0."
+
+== List all funds ==
+Client -> API : GET /api/v1/funds
+activate API #dae8fc
+API -> ORM : Fund.listAll()
+activate ORM #fff2cc
+ORM -> DB : SELECT * FROM funds
+DB --> ORM : 3 seeded + synced funds
+deactivate ORM
+loop for each fund
+  API -> ORM : FundMetrics.findLatestForFund(id)
+  activate ORM #fff2cc
+  ORM -> DB : SELECT ... ORDER BY period_end DESC LIMIT 1
+  DB --> ORM : latest metrics row
+  deactivate ORM
+  API -> API : parse investmentMix /\ntopTenInvestments JSON
+end
+API --> Client : <b>200</b> [ {id, name, provider, riskIndicator,\nlatestMetrics{fees, returns, mix, topTen}} ]
+deactivate API
+
+== Single fund ==
+Client -> API : GET /api/v1/funds/{id}
+activate API #dae8fc
+API -> ORM : Fund.findById(id)
+activate ORM #fff2cc
+ORM -> DB : SELECT ... WHERE id = ?
+DB --> ORM : fund | null
+deactivate ORM
+
+alt fund found
+  API -> ORM : FundMetrics.findLatestForFund(id)
+  ORM -> DB : latest metrics
+  DB --> ORM : row
+  API --> Client : <b>200</b> {fund + latestMetrics}
+else not found #FFEBEE
+  API --> Client : <b>404</b> problem+json\n{title: "Not found", status: 404}
+end
+deactivate API
+@enduml

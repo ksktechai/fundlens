@@ -1,0 +1,120 @@
+@startuml explain
+title <b>POST /api/v1/explain</b> — research → write → compliance, fully audited
+
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam lifelineStrategy solid
+skinparam ParticipantPadding 25
+skinparam sequence {
+  ArrowColor #283593
+  ArrowThickness 1.8
+  ArrowFontSize 12
+  LifeLineBorderColor #3949AB
+  LifeLineBorderThickness 2.5
+  GroupBorderColor #8E24AA
+  GroupBorderThickness 2
+  GroupBackgroundColor #F3E5F5
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #E8EAF6
+  DividerFontStyle bold
+}
+skinparam participant {
+  BorderThickness 2
+  FontStyle bold
+}
+skinparam database {
+  BorderThickness 2
+  FontStyle bold
+}
+
+actor "Client" as Client #ECEFF1
+participant "ExplainResource" as API #dae8fc
+participant "ExplainOrchestrator" as ORCH #e1d5e7
+participant "ResearchAgent" as RES #e1d5e7
+participant "WriterAgent" as WRI #e1d5e7
+participant "ComplianceGate\n(+ ComplianceAgent)" as COMP #f3e0f7
+participant "Tools\n(FundData, FeeCalc)" as TOOLS #fff2cc
+participant "AuditService" as AUD #f8cecc
+database "PostgreSQL\n+ pgvector" as DB #d5e8d4
+participant "Ollama (LAN)\n192.168.1.5" as LLM #ffe6cc
+
+autonumber "<b>0."
+
+Client -> API : POST /api/v1/explain\n{question, fundIds?, audience}
+activate API #dae8fc
+API -> ORCH : explain(question, fundIds, audience)
+activate ORCH #e1d5e7
+
+== 1 · Research (RAG + tools) ==
+ORCH -> RES : research(question, fund scope)
+activate RES #e1d5e7
+RES -> LLM : embed query (nomic-embed-text)
+RES -> DB : vector search\n(filter: fund_id metadata)
+DB --> RES : top-k chunks (recorded for audit)
+RES -> LLM : chat — model <b>research</b> (qwen3:30b)
+opt LLM requests tool calls
+  RES -> TOOLS : getLatestFundMetrics / projectedAnnualFeeCost
+  TOOLS -> DB : fund_metrics lookup
+  DB --> TOOLS : exact fees / returns
+  TOOLS --> RES : tool result
+  RES -> LLM : chat (tool results appended)
+end
+LLM --> RES : findings
+RES --> ORCH : cited findings list
+deactivate RES
+
+== 2 · Write ==
+ORCH -> WRI : write(question, audience, findings)
+activate WRI #e1d5e7
+WRI -> LLM : chat — model <b>writer</b> (qwen3:30b)
+LLM --> WRI : draft + citations + disclaimer
+WRI --> ORCH : draft 1
+deactivate WRI
+
+== 3 · Compliance gate ==
+ORCH -> COMP : review(draft, findings)
+activate COMP #f3e0f7
+COMP -> LLM : chat — model <b>compliance</b> (qwen3:8b)\nstructured JSON {verdict, issues}
+LLM --> COMP : verdict
+note right of COMP #ffcdd2 : malformed / unparseable\noutput ⇒ <b>BLOCK</b> (fail-safe)
+COMP --> ORCH : PASS | REVISE | BLOCK + issues
+deactivate COMP
+
+alt verdict = REVISE (one retry only)
+  ORCH -> WRI : write(..., revision notes = issues)
+  activate WRI #e1d5e7
+  WRI -> LLM : chat
+  LLM --> WRI : draft 2
+  WRI --> ORCH : draft 2
+  deactivate WRI
+  ORCH -> COMP : review(draft 2, findings)
+  activate COMP #f3e0f7
+  COMP --> ORCH : PASS | REVISE | BLOCK
+  deactivate COMP
+end
+
+alt final verdict = PASS
+  ORCH -> ORCH : answer = approved draft
+else anything else
+  ORCH -> ORCH : answer = <b>safe fallback message</b>\n(verdict reported as BLOCK)
+end
+
+== 4 · Audit (always — even BLOCK / timeout) ==
+ORCH -> AUD : append(question, chunks, findings,\nall drafts, all verdicts, answer, latency)
+activate AUD #f8cecc
+AUD -> DB : INSERT audit_records\n(REQUIRES_NEW · append-only trigger)
+AUD --> ORCH : auditId
+deactivate AUD
+
+ORCH --> API : Outcome(answer, verdict, citations, auditId)
+deactivate ORCH
+API --> Client : <b>200</b> {answer, citations,\ncomplianceVerdict, auditId}
+deactivate API
+
+group Upstream failure (Ollama down / timeout) #FFEBEE
+  note over ORCH, LLM #ffcdd2
+    Any research/writer LLM failure → audit still written with
+    status UPSTREAM_ERROR, then <b>503</b> problem detail {title, status, auditId}
+  end note
+end
+@enduml
