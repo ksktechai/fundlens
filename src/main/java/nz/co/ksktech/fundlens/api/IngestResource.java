@@ -1,5 +1,7 @@
 package nz.co.ksktech.fundlens.api;
 
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +18,6 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import nz.co.ksktech.fundlens.api.ApiDtos.IngestResponse;
-import nz.co.ksktech.fundlens.domain.FundDocument;
 import nz.co.ksktech.fundlens.ingest.IngestionService;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -71,7 +72,7 @@ public class IngestResource {
   @Operation(
       summary = "Upload and ingest a fund document (PDF or text)",
       description = "Chunks, embeds and stores the document in the vector store for RAG.")
-  public IngestResponse ingest(@Valid @BeanParam IngestForm form) {
+  public Uni<IngestResponse> ingest(@Valid @BeanParam IngestForm form) {
     byte[] data;
     try {
       data = Files.readAllBytes(form.file.uploadedFile());
@@ -80,13 +81,17 @@ public class IngestResource {
     }
     LocalDate periodEnd = parsePeriodEnd(form.periodEnd);
     String fileName = form.file.fileName() != null ? form.file.fileName() : "upload";
-    FundDocument document =
-        ingestionService.ingest(
-            data,
-            fileName,
-            new IngestionService.IngestionRequest(
-                form.fundId, form.providerId, form.docType, periodEnd, fileName, "UPLOAD"));
-    return new IngestResponse(document.id, document.title, document.chunkCount);
+
+    return Uni.createFrom()
+        .item(
+            () ->
+                ingestionService.ingest(
+                    data,
+                    fileName,
+                    new IngestionService.IngestionRequest(
+                        form.fundId, form.providerId, form.docType, periodEnd, fileName, "UPLOAD")))
+        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+        .map(document -> new IngestResponse(document.id, document.title, document.chunkCount));
   }
 
   /**

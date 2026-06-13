@@ -9,8 +9,8 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import io.quarkus.logging.Log;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -65,7 +65,6 @@ public class IngestionService {
    * @param request the ingestion request details
    * @return the created FundDocument
    */
-  @Transactional
   public FundDocument ingest(byte[] data, String fileName, IngestionRequest request) {
     String text = extractText(data, fileName);
 
@@ -86,21 +85,27 @@ public class IngestionService {
     DocumentSplitter splitter = DocumentSplitters.recursive(MAX_CHUNK_CHARS, CHUNK_OVERLAP_CHARS);
     List<TextSegment> segments = splitter.split(document);
     List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-    embeddingStore.addAll(embeddings, segments);
 
-    FundDocument fundDocument = new FundDocument();
-    fundDocument.fundId = request.fundId();
-    fundDocument.title = request.title();
-    fundDocument.provider = request.provider();
-    fundDocument.docType = request.docType();
-    fundDocument.periodEnd = request.periodEnd();
-    fundDocument.source = request.source();
-    fundDocument.chunkCount = segments.size();
-    fundDocument.persist();
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () -> {
+              embeddingStore.addAll(embeddings, segments);
 
-    Log.infof(
-        "Ingested '%s' (%d chunks, fund %s)", request.title(), segments.size(), request.fundId());
-    return fundDocument;
+              FundDocument fundDocument = new FundDocument();
+              fundDocument.fundId = request.fundId();
+              fundDocument.title = request.title();
+              fundDocument.provider = request.provider();
+              fundDocument.docType = request.docType();
+              fundDocument.periodEnd = request.periodEnd();
+              fundDocument.source = request.source();
+              fundDocument.chunkCount = segments.size();
+              fundDocument.persist();
+
+              Log.infof(
+                  "Ingested '%s' (%d chunks, fund %s)",
+                  request.title(), segments.size(), request.fundId());
+              return fundDocument;
+            });
   }
 
   /**
