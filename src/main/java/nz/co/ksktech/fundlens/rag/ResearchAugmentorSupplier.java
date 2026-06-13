@@ -27,6 +27,13 @@ public class ResearchAugmentorSupplier implements Supplier<RetrievalAugmentor> {
 
   private final RetrievalAugmentor augmentor;
 
+  /**
+   * Constructs a ResearchAugmentorSupplier.
+   *
+   * @param embeddingStore the embedding store
+   * @param embeddingModel the embedding model
+   * @param retrievalContext the retrieval context
+   */
   public ResearchAugmentorSupplier(
       EmbeddingStore<TextSegment> embeddingStore,
       EmbeddingModel embeddingModel,
@@ -50,6 +57,11 @@ public class ResearchAugmentorSupplier implements Supplier<RetrievalAugmentor> {
     this.augmentor = DefaultRetrievalAugmentor.builder().contentRetriever(tracking).build();
   }
 
+  /**
+   * Gets the RetrievalAugmentor.
+   *
+   * @return the RetrievalAugmentor
+   */
   @Override
   public RetrievalAugmentor get() {
     return augmentor;
@@ -58,6 +70,12 @@ public class ResearchAugmentorSupplier implements Supplier<RetrievalAugmentor> {
   private record TrackingRetriever(ContentRetriever delegate, RetrievalContext context)
       implements ContentRetriever {
 
+    /**
+     * Retrieves contents for a query and records the chunks.
+     *
+     * @param query the query
+     * @return the list of contents
+     */
     @Override
     public List<Content> retrieve(Query query) {
       List<Content> contents = delegate.retrieve(query);

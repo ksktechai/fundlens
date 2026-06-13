@@ -28,10 +28,20 @@ public class DevSeedIngestor {
 
   private final IngestionService ingestionService;
 
+  /**
+   * Constructs a DevSeedIngestor.
+   *
+   * @param ingestionService the ingestion service
+   */
   public DevSeedIngestor(IngestionService ingestionService) {
     this.ingestionService = ingestionService;
   }
 
+  /**
+   * Observes the application startup event and ingests seed data if in development mode.
+   *
+   * @param event the startup event
+   */
   @ActivateRequestContext
   void onStart(@Observes StartupEvent event) {
     if (LaunchMode.current() != LaunchMode.DEVELOPMENT) {
@@ -53,6 +63,12 @@ public class DevSeedIngestor {
     }
   }
 
+  /**
+   * Ingests a single seed file.
+   *
+   * @param resourcePath the path to the seed resource
+   * @param fundName the name of the fund associated with the seed data
+   */
   private void ingestSeed(String resourcePath, String fundName) {
     try (InputStream in =
         Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {

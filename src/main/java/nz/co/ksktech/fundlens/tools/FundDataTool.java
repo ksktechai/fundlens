@@ -13,6 +13,13 @@ import nz.co.ksktech.fundlens.domain.FundMetrics;
 @ApplicationScoped
 public class FundDataTool {
 
+  /**
+   * Get the latest fees, returns and key facts for a KiwiSaver fund. Accepts the fund name (or part
+   * of it) or the numeric fund id.
+   *
+   * @param fundNameOrId The name or ID of the fund.
+   * @return A string containing the latest fund metrics.
+   */
   @Tool(
       "Get the latest fees, returns and key facts for a KiwiSaver fund. "
           + "Accepts the fund name (or part of it) or the numeric fund id.")
@@ -50,6 +57,12 @@ public class FundDataTool {
             m.investmentMix == null ? "not recorded" : m.investmentMix);
   }
 
+  /**
+   * Get the latest asset allocation (investment mix) and top ten holdings for a KiwiSaver fund.
+   *
+   * @param fundNameOrId The name or ID of the fund.
+   * @return A string containing the asset allocation details.
+   */
   @Tool(
       "Get the latest asset allocation (investment mix) and top ten holdings for a KiwiSaver fund.")
   public String getAssetAllocation(String fundNameOrId) {
@@ -71,6 +84,12 @@ public class FundDataTool {
             m.topTenInvestments == null ? "not recorded" : m.topTenInvestments);
   }
 
+  /**
+   * Resolves a fund from its name or ID.
+   *
+   * @param fundNameOrId The name or ID of the fund.
+   * @return An Optional containing the Fund if found, otherwise empty.
+   */
   private static Optional<Fund> resolve(String fundNameOrId) {
     if (fundNameOrId == null || fundNameOrId.isBlank()) {
       return Optional.empty();
@@ -83,6 +102,12 @@ public class FundDataTool {
         .firstResultOptional();
   }
 
+  /**
+   * Returns "not recorded" for null values, otherwise the string representation of the object.
+   *
+   * @param value The object to check.
+   * @return The string representation or "not recorded".
+   */
   private static String nullable(Object value) {
     return value == null ? "not recorded" : value.toString();
   }

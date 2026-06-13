@@ -20,6 +20,11 @@ public final class ApiDtos {
   public record ExplainRequest(
       @NotBlank @Size(max = 2000) String question, List<Long> fundIds, Audience audience) {
 
+    /**
+     * Gets the audience or default.
+     *
+     * @return the audience, or INVESTOR if null
+     */
     public Audience audienceOrDefault() {
       return audience == null ? Audience.INVESTOR : audience;
     }
@@ -89,18 +94,46 @@ public final class ApiDtos {
       Integer errorStatus,
       UUID auditId) {
 
+    /**
+     * Creates a stage event.
+     *
+     * @param stage the stage
+     * @param status the status
+     * @param detail the detail
+     * @return the event
+     */
     public static ExplainStreamEvent stage(String stage, String status, String detail) {
       return new ExplainStreamEvent("stage", stage, status, detail, null, null, null, null);
     }
 
+    /**
+     * Creates an answer chunk event.
+     *
+     * @param chunk the answer chunk
+     * @return the event
+     */
     public static ExplainStreamEvent answerChunk(String chunk) {
       return new ExplainStreamEvent("answer-chunk", null, null, null, chunk, null, null, null);
     }
 
+    /**
+     * Creates a complete event.
+     *
+     * @param result the result
+     * @return the event
+     */
     public static ExplainStreamEvent complete(ExplainResponse result) {
       return new ExplainStreamEvent("complete", null, null, null, null, result, null, null);
     }
 
+    /**
+     * Creates an error event.
+     *
+     * @param status the status code
+     * @param detail the error detail
+     * @param auditId the audit ID
+     * @return the event
+     */
     public static ExplainStreamEvent error(int status, String detail, UUID auditId) {
       return new ExplainStreamEvent("error", null, null, detail, null, null, status, auditId);
     }

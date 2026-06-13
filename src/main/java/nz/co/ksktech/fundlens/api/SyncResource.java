@@ -18,11 +18,22 @@ public class SyncResource {
   private final DiscloseSyncService syncService;
   private final ObjectMapper objectMapper;
 
+  /**
+   * Constructs a SyncResource.
+   *
+   * @param syncService the sync service
+   * @param objectMapper the object mapper
+   */
   public SyncResource(DiscloseSyncService syncService, ObjectMapper objectMapper) {
     this.syncService = syncService;
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * Triggers an immediate Disclose Register sync.
+   *
+   * @return the sync run response
+   */
   @POST
   @Operation(
       summary = "Trigger an immediate Disclose Register sync",

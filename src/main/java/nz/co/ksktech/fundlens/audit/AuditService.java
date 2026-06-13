@@ -14,12 +14,24 @@ import nz.co.ksktech.fundlens.domain.AuditRecord;
 @ApplicationScoped
 public class AuditService {
 
+  /**
+   * Appends an audit record.
+   *
+   * @param record the audit record to append
+   * @return the ID of the appended record
+   */
   @Transactional(Transactional.TxType.REQUIRES_NEW)
   public UUID append(AuditRecord record) {
     record.persist();
     return record.id;
   }
 
+  /**
+   * Finds an audit record by its ID.
+   *
+   * @param id the ID of the audit record
+   * @return an Optional containing the audit record if found, otherwise empty
+   */
   public Optional<AuditRecord> find(UUID id) {
     return AuditRecord.findByIdOptional(id);
   }

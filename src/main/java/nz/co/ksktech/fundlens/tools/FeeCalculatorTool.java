@@ -8,6 +8,14 @@ import java.math.RoundingMode;
 @ApplicationScoped
 public class FeeCalculatorTool {
 
+  /**
+   * Calculate the projected annual fee cost in dollars for a given balance and total annual fund
+   * charge percentage.
+   *
+   * @param balanceDollars The balance in dollars.
+   * @param annualFeePercent The annual fee percentage.
+   * @return A string describing the projected annual fee cost.
+   */
   @Tool(
       "Calculate the projected annual fee cost in dollars for a given balance "
           + "and total annual fund charge percentage.")

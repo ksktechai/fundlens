@@ -14,6 +14,11 @@ public class DiscloseAuthFilter implements ClientRequestFilter {
 
   static final String SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key";
 
+  /**
+   * Filters the client request to add the subscription key header.
+   *
+   * @param requestContext the client request context
+   */
   @Override
   public void filter(ClientRequestContext requestContext) {
     String key = ConfigProvider.getConfig().getValue("disclose.api.subscription-key", String.class);

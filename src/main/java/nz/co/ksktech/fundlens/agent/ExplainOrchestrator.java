@@ -49,6 +49,17 @@ public class ExplainOrchestrator {
   private final ObjectMapper objectMapper;
   private final String writerModelName;
 
+  /**
+   * Constructor for ExplainOrchestrator.
+   *
+   * @param researchAgent the agent for research
+   * @param writerAgent the agent for writing
+   * @param complianceGate the compliance gate
+   * @param auditService the audit service
+   * @param retrievalContext the context for retrieval
+   * @param objectMapper object mapper for JSON
+   * @param writerModelName the writer model name
+   */
   public ExplainOrchestrator(
       ResearchAgent researchAgent,
       WriterAgent writerAgent,
@@ -67,10 +78,27 @@ public class ExplainOrchestrator {
     this.writerModelName = writerModelName;
   }
 
+  /**
+   * Explains a question given some funds and an audience.
+   *
+   * @param question the question to answer
+   * @param fundIds the funds in scope
+   * @param audience the target audience
+   * @return the outcome of the explanation
+   */
   public Outcome explain(String question, List<Long> fundIds, Audience audience) {
     return explain(question, fundIds, audience, ProgressListener.NOOP);
   }
 
+  /**
+   * Explains a question given some funds, an audience, and a progress listener.
+   *
+   * @param question the question to answer
+   * @param fundIds the funds in scope
+   * @param audience the target audience
+   * @param listener a listener for progress updates
+   * @return the outcome of the explanation
+   */
   public Outcome explain(
       String question, List<Long> fundIds, Audience audience, ProgressListener listener) {
     long startNanos = System.nanoTime();
@@ -142,6 +170,20 @@ public class ExplainOrchestrator {
     }
   }
 
+  /**
+   * Appends an audit record.
+   *
+   * @param question the question
+   * @param fundIds the fund IDs
+   * @param audience the audience
+   * @param findings the findings
+   * @param drafts the drafts
+   * @param complianceResults the compliance results
+   * @param finalAnswer the final answer
+   * @param status the status
+   * @param startNanos the start time in nanos
+   * @return the UUID of the audit record
+   */
   private UUID appendAudit(
       String question,
       List<Long> fundIds,
@@ -167,11 +209,22 @@ public class ExplainOrchestrator {
     return auditService.append(record);
   }
 
+  /**
+   * Gets a formatted string for the verdict detail.
+   *
+   * @param result the compliance result
+   * @return the verdict detail string
+   */
   private static String verdictDetail(ComplianceResult result) {
     int issues = result.issues().size();
     return result.verdict() + (issues == 0 ? "" : " (" + issues + " issue" + (issues > 1 ? "s" : "") + ")");
   }
 
+  /**
+   * Returns citations.
+   *
+   * @return a list of citations
+   */
   private List<Citation> citations() {
     LinkedHashSet<Citation> unique = new LinkedHashSet<>();
     for (RetrievalContext.RetrievedChunk chunk : retrievalContext.getRetrievedChunks()) {
@@ -182,6 +235,12 @@ public class ExplainOrchestrator {
     return List.copyOf(unique);
   }
 
+  /**
+   * Describes the given funds.
+   *
+   * @param fundIds the IDs of the funds
+   * @return a description of the funds
+   */
   private static String describeFunds(List<Long> fundIds) {
     if (fundIds.isEmpty()) {
       return "all KiwiSaver funds in the catalogue";
@@ -194,6 +253,12 @@ public class ExplainOrchestrator {
     return String.join(", ", names);
   }
 
+  /**
+   * Converts an object to a JSON string.
+   *
+   * @param value the object to convert
+   * @return the JSON string representation
+   */
   private String toJson(Object value) {
     try {
       return objectMapper.writeValueAsString(value);

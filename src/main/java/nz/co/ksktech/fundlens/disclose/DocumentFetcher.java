@@ -23,6 +23,13 @@ public class DocumentFetcher {
           .connectTimeout(Duration.ofSeconds(10))
           .build();
 
+  /**
+   * Fetches the content of a given URL.
+   *
+   * @param url The URL to fetch.
+   * @return The content of the URL as a byte array.
+   * @throws DiscloseApiException if the download fails or the response code is not 200.
+   */
   public byte[] fetch(String url) {
     Log.infof(">>> GET %s (document download, no API headers)", url);
     HttpRequest request =

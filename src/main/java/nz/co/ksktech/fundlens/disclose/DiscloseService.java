@@ -22,6 +22,11 @@ public class DiscloseService {
 
   /** Result of a conditional fund fetch. */
   public record FundFetchResult(boolean notModified, DiscloseFund fund, String etag) {
+    /**
+     * Creates a FundFetchResult indicating the fund was not modified.
+     *
+     * @return a new FundFetchResult
+     */
     public static FundFetchResult unchanged() {
       return new FundFetchResult(true, null, null);
     }
@@ -30,6 +35,12 @@ public class DiscloseService {
   private final DiscloseRegisterClient client;
   private final String organisationId;
 
+  /**
+   * Constructs a DiscloseService.
+   *
+   * @param client the DiscloseRegisterClient
+   * @param organisationId the organisation ID
+   */
   public DiscloseService(
       @RestClient DiscloseRegisterClient client,
       @ConfigProperty(name = "disclose.api.organisation-id") String organisationId) {
@@ -37,6 +48,13 @@ public class DiscloseService {
     this.organisationId = organisationId;
   }
 
+  /**
+   * Fetches a fund from the Disclose Register.
+   *
+   * @param fundNumber the fund number
+   * @param etag the ETag for conditional fetching
+   * @return the fund fetch result
+   */
   @Retry(maxRetries = 2, delay = 200, retryOn = DiscloseApiException.class)
   @Timeout(15000)
   @CircuitBreaker(
@@ -65,6 +83,9 @@ public class DiscloseService {
    * Returns the Location header of the 302 response. The REST client never follows the redirect
    * (follow-redirects=false) so the subscription key stays inside the gateway; the caller downloads
    * the Location with {@link DocumentFetcher}.
+   *
+   * @param fundNumber the fund number
+   * @return the location of the fund update document
    */
   @Retry(maxRetries = 2, delay = 200, retryOn = DiscloseApiException.class)
   @Timeout(15000)
@@ -91,6 +112,13 @@ public class DiscloseService {
     }
   }
 
+  /**
+   * Searches for managed fund offers.
+   *
+   * @param search the search query
+   * @param page the page number
+   * @return a page of offer summaries
+   */
   public DisclosePage<OfferSummary> searchManagedFundOffers(String search, Integer page) {
     return client.searchOffers(search, "managedFund", "open", page, organisationId);
   }
@@ -99,6 +127,10 @@ public class DiscloseService {
    * The Quarkus REST client throws WebApplicationException for 4xx/5xx even on Response-returning
    * methods; translate to DiscloseApiException so {@code @Retry}/{@code @CircuitBreaker} treat it
    * as a gateway failure.
+   *
+   * @param call the function to call
+   * @param operation the operation name
+   * @return the response
    */
   private static Response invoke(java.util.function.Supplier<Response> call, String operation) {
     try {

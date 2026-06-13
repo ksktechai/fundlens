@@ -24,11 +24,23 @@ public class AuditResource {
   private final AuditService auditService;
   private final ObjectMapper objectMapper;
 
+  /**
+   * Constructs an AuditResource.
+   *
+   * @param auditService the audit service
+   * @param objectMapper the object mapper
+   */
   public AuditResource(AuditService auditService, ObjectMapper objectMapper) {
     this.auditService = auditService;
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * Gets the audit record by ID.
+   *
+   * @param auditId the audit ID
+   * @return the audit response
+   */
   @GET
   @Path("/{auditId}")
   @Operation(
@@ -57,6 +69,12 @@ public class AuditResource {
         record.latencyMs);
   }
 
+  /**
+   * Parses JSON string into a JsonNode.
+   *
+   * @param json the JSON string
+   * @return the JSON node
+   */
   private JsonNode parseJson(String json) {
     if (json == null) {
       return null;

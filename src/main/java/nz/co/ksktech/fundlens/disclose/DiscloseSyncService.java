@@ -42,6 +42,15 @@ public class DiscloseSyncService {
   private final ObjectMapper objectMapper;
   private final Optional<List<String>> configuredFundNumbers;
 
+  /**
+   * Constructs a DiscloseSyncService.
+   *
+   * @param discloseService the disclose service
+   * @param documentFetcher the document fetcher
+   * @param ingestionService the ingestion service
+   * @param objectMapper the object mapper
+   * @param configuredFundNumbers the configured fund numbers to sync
+   */
   public DiscloseSyncService(
       DiscloseService discloseService,
       DocumentFetcher documentFetcher,
@@ -56,6 +65,9 @@ public class DiscloseSyncService {
     this.configuredFundNumbers = configuredFundNumbers;
   }
 
+  /**
+   * Nightly scheduled sync job.
+   */
   @Scheduled(cron = "0 0 3 * * ?")
   void nightly() {
     if (configuredFundNumbers.map(List::isEmpty).orElse(true)) {
@@ -65,10 +77,23 @@ public class DiscloseSyncService {
     run("SCHEDULED");
   }
 
+  /**
+   * Runs the sync for configured funds.
+   *
+   * @param trigger the trigger source (e.g., SCHEDULED or MANUAL)
+   * @return the sync summary
+   */
   public SyncSummary run(String trigger) {
     return run(configuredFundNumbers.orElse(List.of()), trigger);
   }
 
+  /**
+   * Runs the sync for a specific list of fund numbers.
+   *
+   * @param fundNumbers the list of fund numbers
+   * @param trigger the trigger source
+   * @return the sync summary
+   */
   public SyncSummary run(List<String> fundNumbers, String trigger) {
     Instant started = Instant.now();
     List<FundOutcome> outcomes = new ArrayList<>();
@@ -86,6 +111,12 @@ public class DiscloseSyncService {
     return new SyncSummary(runId, started, finished, status, outcomes);
   }
 
+  /**
+   * Syncs a single fund.
+   *
+   * @param fundNumber the fund number
+   * @return the outcome for the fund
+   */
   private FundOutcome syncFund(String fundNumber) {
     String storedEtag =
         QuarkusTransaction.requiringNew()
@@ -124,6 +155,13 @@ public class DiscloseSyncService {
     }
   }
 
+  /**
+   * Upserts the fund data.
+   *
+   * @param fundNumber the fund number
+   * @param result the fetched result
+   * @return the fund ID
+   */
   private Long upsert(String fundNumber, FundFetchResult result) {
     DiscloseFund source = result.fund();
     Fund fund =
@@ -170,6 +208,16 @@ public class DiscloseSyncService {
     return fund.id;
   }
 
+  /**
+   * Persists a sync run record.
+   *
+   * @param started the start time
+   * @param finished the end time
+   * @param trigger the trigger source
+   * @param status the overall status
+   * @param outcomes the fund outcomes
+   * @return the ID of the persisted run
+   */
   private Long persistRun(
       Instant started,
       Instant finished,
@@ -190,6 +238,12 @@ public class DiscloseSyncService {
             });
   }
 
+  /**
+   * Calculates the overall status from outcomes.
+   *
+   * @param outcomes the list of outcomes
+   * @return the overall status
+   */
   private static String overallStatus(List<FundOutcome> outcomes) {
     boolean anyFailed = outcomes.stream().anyMatch(o -> "FAILED".equals(o.status()));
     boolean anySucceeded = outcomes.stream().anyMatch(o -> !"FAILED".equals(o.status()));
@@ -199,12 +253,24 @@ public class DiscloseSyncService {
     return anySucceeded ? "PARTIAL" : "FAILED";
   }
 
+  /**
+   * Gets the provider name from a DiscloseFund.
+   *
+   * @param fund the fund
+   * @return the provider string
+   */
   private static String providerOf(DiscloseFund fund) {
     return fund.offerNumber() != null
         ? "Disclose offer " + fund.offerNumber()
         : "Disclose Register";
   }
 
+  /**
+   * Converts an object to JSON.
+   *
+   * @param value the object
+   * @return the JSON string
+   */
   private String toJson(Object value) {
     try {
       return value == null ? null : objectMapper.writeValueAsString(value);

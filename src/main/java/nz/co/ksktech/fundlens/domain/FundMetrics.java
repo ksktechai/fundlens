@@ -69,10 +69,23 @@ public class FundMetrics extends PanacheEntityBase {
   @Column(name = "created_at", nullable = false)
   public Instant createdAt = Instant.now();
 
+  /**
+   * Finds the latest metrics for a given fund.
+   *
+   * @param fundId the fund ID
+   * @return an Optional containing the latest FundMetrics if found, otherwise empty
+   */
   public static Optional<FundMetrics> findLatestForFund(Long fundId) {
     return find("fund.id = ?1 order by periodEnd desc", fundId).firstResultOptional();
   }
 
+  /**
+   * Finds metrics by fund ID and period end.
+   *
+   * @param fundId the fund ID
+   * @param periodEnd the period end date
+   * @return an Optional containing the FundMetrics if found, otherwise empty
+   */
   public static Optional<FundMetrics> findByFundAndPeriod(Long fundId, LocalDate periodEnd) {
     return find("fund.id = ?1 and periodEnd = ?2", fundId, periodEnd).firstResultOptional();
   }

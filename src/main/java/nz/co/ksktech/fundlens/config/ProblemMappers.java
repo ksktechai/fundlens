@@ -18,6 +18,14 @@ public class ProblemMappers {
   public record Problem(
       String type, String title, int status, String detail, List<String> violations, UUID auditId) {
 
+    /**
+     * Creates a Problem instance.
+     *
+     * @param title The title of the problem.
+     * @param status The HTTP status code.
+     * @param detail A detailed description of the problem.
+     * @return A new Problem instance.
+     */
     static Problem of(String title, int status, String detail) {
       return new Problem("about:blank", title, status, detail, null, null);
     }
@@ -25,6 +33,12 @@ public class ProblemMappers {
 
   private static final String PROBLEM_JSON = "application/problem+json";
 
+  /**
+   * Maps a ConstraintViolationException to a problem response.
+   *
+   * @param e The exception to map.
+   * @return The REST response with the problem details.
+   */
   @ServerExceptionMapper
   public RestResponse<Problem> constraintViolation(ConstraintViolationException e) {
     List<String> violations =
@@ -38,16 +52,34 @@ public class ProblemMappers {
     return problemResponse(problem);
   }
 
+  /**
+   * Maps a NotFoundException to a problem response.
+   *
+   * @param e The exception to map.
+   * @return The REST response with the problem details.
+   */
   @ServerExceptionMapper
   public RestResponse<Problem> notFound(NotFoundException e) {
     return problemResponse(Problem.of("Not found", 404, e.getMessage()));
   }
 
+  /**
+   * Maps a BadRequestException to a problem response.
+   *
+   * @param e The exception to map.
+   * @return The REST response with the problem details.
+   */
   @ServerExceptionMapper
   public RestResponse<Problem> badRequest(BadRequestException e) {
     return problemResponse(Problem.of("Bad request", 400, e.getMessage()));
   }
 
+  /**
+   * Maps an LlmUnavailableException to a problem response.
+   *
+   * @param e The exception to map.
+   * @return The REST response with the problem details.
+   */
   @ServerExceptionMapper
   public RestResponse<Problem> llmUnavailable(LlmUnavailableException e) {
     Log.errorf(e, "LLM backend unavailable");
@@ -62,12 +94,24 @@ public class ProblemMappers {
     return problemResponse(problem);
   }
 
+  /**
+   * Maps a DiscloseApiException to a problem response.
+   *
+   * @param e The exception to map.
+   * @return The REST response with the problem details.
+   */
   @ServerExceptionMapper
   public RestResponse<Problem> discloseFailure(DiscloseApiException e) {
     Log.errorf(e, "Disclose Register call failed");
     return problemResponse(Problem.of("Disclose Register unavailable", 502, e.getMessage()));
   }
 
+  /**
+   * A fallback exception mapper for any unhandled exceptions.
+   *
+   * @param e The exception to map.
+   * @return The REST response with the problem details.
+   */
   @ServerExceptionMapper
   public RestResponse<Problem> fallback(Exception e) {
     if (e instanceof WebApplicationException wae) {
@@ -85,6 +129,12 @@ public class ProblemMappers {
         Problem.of("Internal server error", 500, "An unexpected error occurred"));
   }
 
+  /**
+   * Creates a REST response for a given problem.
+   *
+   * @param problem The problem details.
+   * @return The REST response.
+   */
   private static RestResponse<Problem> problemResponse(Problem problem) {
     return RestResponse.ResponseBuilder.create(
             RestResponse.Status.fromStatusCode(problem.status()), problem)

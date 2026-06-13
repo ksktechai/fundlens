@@ -34,6 +34,12 @@ public class HttpLoggingFilter
   @ConfigProperty(name = "fundlens.log.http-bodies", defaultValue = "true")
   boolean logBodies;
 
+  /**
+   * Filters a request context, logging its method, path, and optionally its body.
+   *
+   * @param request the container request context
+   * @throws IOException if reading the entity fails
+   */
   @Override
   public void filter(ContainerRequestContext request) throws IOException {
     request.setProperty(START_NANOS, System.nanoTime());
@@ -50,6 +56,12 @@ public class HttpLoggingFilter
     Log.infof(">>> %s %s%s", request.getMethod(), pathWithQuery(request), detail);
   }
 
+  /**
+   * Filters a response context, logging the status code and time taken.
+   *
+   * @param request the container request context
+   * @param response the container response context
+   */
   @Override
   public void filter(ContainerRequestContext request, ContainerResponseContext response) {
     Object start = request.getProperty(START_NANOS);
@@ -59,6 +71,13 @@ public class HttpLoggingFilter
         request.getMethod(), pathWithQuery(request), response.getStatus(), millis);
   }
 
+  /**
+   * Intercepts a response write, optionally logging its textual body.
+   *
+   * @param context the writer interceptor context
+   * @throws IOException if writing to the stream fails
+   * @throws WebApplicationException if a web application error occurs
+   */
   @Override
   public void aroundWriteTo(WriterInterceptorContext context)
       throws IOException, WebApplicationException {
@@ -79,11 +98,23 @@ public class HttpLoggingFilter
     }
   }
 
+  /**
+   * Constructs the full path with query parameters.
+   *
+   * @param request the request context
+   * @return the formatted path and query string
+   */
   private static String pathWithQuery(ContainerRequestContext request) {
     var uri = request.getUriInfo().getRequestUri();
     return uri.getPath() + (uri.getQuery() != null ? "?" + uri.getQuery() : "");
   }
 
+  /**
+   * Determines whether a given media type is textual.
+   *
+   * @param mediaType the media type
+   * @return true if textual, false otherwise
+   */
   private static boolean isTextual(MediaType mediaType) {
     if (mediaType == null) {
       return false;
@@ -95,6 +126,12 @@ public class HttpLoggingFilter
         || "x-www-form-urlencoded".equalsIgnoreCase(subtype);
   }
 
+  /**
+   * Truncates a given body string if it exceeds a limit.
+   *
+   * @param body the body string
+   * @return the truncated string
+   */
   private static String truncate(String body) {
     String single = body.strip();
     if (single.length() <= BODY_LOG_LIMIT) {

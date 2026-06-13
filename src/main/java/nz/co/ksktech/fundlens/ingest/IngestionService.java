@@ -45,12 +45,26 @@ public class IngestionService {
   private final EmbeddingModel embeddingModel;
   private final EmbeddingStore<TextSegment> embeddingStore;
 
+  /**
+   * Constructs an IngestionService.
+   *
+   * @param embeddingModel the embedding model
+   * @param embeddingStore the embedding store
+   */
   public IngestionService(
       EmbeddingModel embeddingModel, EmbeddingStore<TextSegment> embeddingStore) {
     this.embeddingModel = embeddingModel;
     this.embeddingStore = embeddingStore;
   }
 
+  /**
+   * Ingests a document, splitting it into chunks, embedding them, and storing them.
+   *
+   * @param data the document data
+   * @param fileName the name of the file
+   * @param request the ingestion request details
+   * @return the created FundDocument
+   */
   @Transactional
   public FundDocument ingest(byte[] data, String fileName, IngestionRequest request) {
     String text = extractText(data, fileName);
@@ -89,6 +103,13 @@ public class IngestionService {
     return fundDocument;
   }
 
+  /**
+   * Extracts text from a byte array, handling PDF and plain text.
+   *
+   * @param data the byte array
+   * @param fileName the name of the file
+   * @return the extracted text
+   */
   private static String extractText(byte[] data, String fileName) {
     if (isPdf(data)) {
       try (PDDocument pdf = Loader.loadPDF(data)) {
@@ -101,6 +122,12 @@ public class IngestionService {
     return new String(data, StandardCharsets.UTF_8);
   }
 
+  /**
+   * Checks if a byte array is a PDF.
+   *
+   * @param data the byte array
+   * @return true if it is a PDF, false otherwise
+   */
   private static boolean isPdf(byte[] data) {
     return data.length >= 4 && data[0] == '%' && data[1] == 'P' && data[2] == 'D' && data[3] == 'F';
   }

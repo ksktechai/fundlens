@@ -49,10 +49,23 @@ public class IngestResource {
 
   private final IngestionService ingestionService;
 
+  /**
+   * Constructs an IngestResource.
+   *
+   * @param ingestionService the ingestion service
+   */
   public IngestResource(IngestionService ingestionService) {
     this.ingestionService = ingestionService;
   }
 
+  /**
+   * Uploads and ingests a fund document (PDF or text).
+   * Chunks, embeds and stores the document in the vector store for RAG.
+   *
+   * @param form the ingestion form containing document details and the file
+   * @return the ingestion response
+   * @throws BadRequestException if the uploaded file cannot be read or periodEnd is malformed
+   */
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Operation(
@@ -76,6 +89,13 @@ public class IngestResource {
     return new IngestResponse(document.id, document.title, document.chunkCount);
   }
 
+  /**
+   * Parses the period end string to a LocalDate.
+   *
+   * @param value the period end string in ISO date format (yyyy-MM-dd)
+   * @return the parsed LocalDate, or null if the value is null or blank
+   * @throws BadRequestException if the value is not a valid ISO date
+   */
   private static LocalDate parsePeriodEnd(String value) {
     if (value == null || value.isBlank()) {
       return null;

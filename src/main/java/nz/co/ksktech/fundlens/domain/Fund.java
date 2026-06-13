@@ -49,6 +49,12 @@ public class Fund extends PanacheEntityBase {
   @Column(name = "updated_at", nullable = false)
   public Instant updatedAt = Instant.now();
 
+  /**
+   * Finds a fund by its Disclose fund number.
+   *
+   * @param fundNumber the Disclose fund number
+   * @return an Optional containing the fund if found, otherwise empty
+   */
   public static Optional<Fund> findByDiscloseFundNumber(String fundNumber) {
     return find("discloseFundNumber", fundNumber).firstResultOptional();
   }

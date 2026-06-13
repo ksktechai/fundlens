@@ -31,10 +31,21 @@ public class ExplainResource {
 
   private final ExplainOrchestrator orchestrator;
 
+  /**
+   * Constructor for ExplainResource.
+   *
+   * @param orchestrator the explain orchestrator
+   */
   public ExplainResource(ExplainOrchestrator orchestrator) {
     this.orchestrator = orchestrator;
   }
 
+  /**
+   * Asks a natural-language question about KiwiSaver funds.
+   *
+   * @param request the explain request
+   * @return the explain response
+   */
   @POST
   @Operation(
       summary = "Ask a natural-language question about KiwiSaver funds",
@@ -48,6 +59,12 @@ public class ExplainResource {
         outcome.answer(), outcome.citations(), outcome.verdict().name(), outcome.auditId());
   }
 
+  /**
+   * Asks a question and streams the pipeline progress and the approved answer.
+   *
+   * @param request the explain request
+   * @return a Multi of explain stream events
+   */
   @POST
   @Path("/stream")
   @Blocking // request filters read the body; never allowed on the IO thread
@@ -94,6 +111,12 @@ public class ExplainResource {
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
   }
 
+  /**
+   * Chunks an answer into smaller pieces.
+   *
+   * @param answer the answer to chunk
+   * @return a list of chunks
+   */
   static List<String> chunkAnswer(String answer) {
     List<String> chunks = new ArrayList<>();
     String[] words = answer.split("(?<= )");
