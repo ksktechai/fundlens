@@ -65,9 +65,7 @@ public class DiscloseSyncService {
     this.configuredFundNumbers = configuredFundNumbers;
   }
 
-  /**
-   * Nightly scheduled sync job.
-   */
+  /** Nightly scheduled sync job. */
   @Scheduled(cron = "0 0 3 * * ?")
   void nightly() {
     if (configuredFundNumbers.map(List::isEmpty).orElse(true)) {

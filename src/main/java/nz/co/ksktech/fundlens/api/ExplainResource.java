@@ -100,8 +100,7 @@ public class ExplainResource {
                             outcome.verdict().name(),
                             outcome.auditId())));
               } catch (LlmUnavailableException e) {
-                emitter.emit(
-                    ExplainStreamEvent.error(503, "LLM backend unavailable", e.auditId()));
+                emitter.emit(ExplainStreamEvent.error(503, "LLM backend unavailable", e.auditId()));
               } catch (RuntimeException e) {
                 emitter.emit(ExplainStreamEvent.error(500, "Unexpected pipeline failure", null));
               } finally {

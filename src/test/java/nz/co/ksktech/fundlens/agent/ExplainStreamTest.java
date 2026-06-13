@@ -57,10 +57,11 @@ class ExplainStreamTest {
     assertEquals("complete", types.getLast());
     assertTrue(types.contains("answer-chunk"));
 
-    List<String> stageLog = events.stream()
-        .filter(e -> "stage".equals(e.get("type").asText()))
-        .map(e -> e.get("stage").asText() + ":" + e.get("status").asText())
-        .toList();
+    List<String> stageLog =
+        events.stream()
+            .filter(e -> "stage".equals(e.get("type").asText()))
+            .map(e -> e.get("stage").asText() + ":" + e.get("status").asText())
+            .toList();
     assertEquals(
         List.of(
             "research:started", "research:completed",
@@ -68,10 +69,11 @@ class ExplainStreamTest {
             "compliance:started", "compliance:completed"),
         stageLog);
 
-    String reassembled = events.stream()
-        .filter(e -> "answer-chunk".equals(e.get("type").asText()))
-        .map(e -> e.get("chunk").asText())
-        .reduce("", String::concat);
+    String reassembled =
+        events.stream()
+            .filter(e -> "answer-chunk".equals(e.get("type").asText()))
+            .map(e -> e.get("chunk").asText())
+            .reduce("", String::concat);
     assertEquals(GOOD_DRAFT, reassembled);
 
     JsonNode complete = events.getLast();
@@ -95,7 +97,8 @@ class ExplainStreamTest {
     // the fallback is streamed; the draft (which contains -4.1%) never is
     String streamed = events.toString();
     assertFalse(streamed.contains("-4.1%"), "draft content must not reach the stream");
-    assertTrue(complete.get("result").get("answer").asText().contains("unable to provide an answer"));
+    assertTrue(
+        complete.get("result").get("answer").asText().contains("unable to provide an answer"));
   }
 
   @Test
@@ -116,19 +119,26 @@ class ExplainStreamTest {
     assertEquals("error", last.get("type").asText());
     assertEquals(503, last.get("errorStatus").asInt());
     String auditId = last.get("auditId").asText();
-    given().when().get("/api/v1/audit/{id}", auditId)
-        .then().statusCode(200)
+    given()
+        .when()
+        .get("/api/v1/audit/{id}", auditId)
+        .then()
+        .statusCode(200)
         .body("status", org.hamcrest.Matchers.equalTo("UPSTREAM_ERROR"));
   }
 
   private static List<JsonNode> streamExplain(String question) throws Exception {
-    String raw = given()
-        .contentType(ContentType.JSON)
-        .body("{\"question\":\"" + question + "\",\"audience\":\"INVESTOR\"}")
-        .when().post("/api/v1/explain/stream")
-        .then().statusCode(200)
-        .header("Content-Type", org.hamcrest.Matchers.containsString("text/event-stream"))
-        .extract().asString();
+    String raw =
+        given()
+            .contentType(ContentType.JSON)
+            .body("{\"question\":\"" + question + "\",\"audience\":\"INVESTOR\"}")
+            .when()
+            .post("/api/v1/explain/stream")
+            .then()
+            .statusCode(200)
+            .header("Content-Type", org.hamcrest.Matchers.containsString("text/event-stream"))
+            .extract()
+            .asString();
 
     List<JsonNode> events = new ArrayList<>();
     for (String line : raw.split("\n")) {

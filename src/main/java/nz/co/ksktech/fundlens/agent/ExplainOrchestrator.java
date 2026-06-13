@@ -113,7 +113,9 @@ public class ExplainOrchestrator {
       listener.onStage("research", "started", null);
       findings = researchAgent.research(question, describeFunds(scope));
       listener.onStage(
-          "research", "completed", retrievalContext.getRetrievedChunks().size() + " chunks retrieved");
+          "research",
+          "completed",
+          retrievalContext.getRetrievedChunks().size() + " chunks retrieved");
 
       listener.onStage("draft", "started", "attempt 1");
       String draft = writerAgent.write(question, audience.name(), findings, "none");
@@ -217,7 +219,8 @@ public class ExplainOrchestrator {
    */
   private static String verdictDetail(ComplianceResult result) {
     int issues = result.issues().size();
-    return result.verdict() + (issues == 0 ? "" : " (" + issues + " issue" + (issues > 1 ? "s" : "") + ")");
+    return result.verdict()
+        + (issues == 0 ? "" : " (" + issues + " issue" + (issues > 1 ? "s" : "") + ")");
   }
 
   /**

@@ -59,8 +59,8 @@ public class IngestResource {
   }
 
   /**
-   * Uploads and ingests a fund document (PDF or text).
-   * Chunks, embeds and stores the document in the vector store for RAG.
+   * Uploads and ingests a fund document (PDF or text). Chunks, embeds and stores the document in
+   * the vector store for RAG.
    *
    * @param form the ingestion form containing document details and the file
    * @return the ingestion response

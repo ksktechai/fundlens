@@ -24,6 +24,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @Path("/")
 @RegisterRestClient(configKey = "disclose-register")
 @RegisterProvider(DiscloseAuthFilter.class)
+@RegisterProvider(DiscloseLoggingFilter.class)
 public interface DiscloseRegisterClient {
 
   /**
